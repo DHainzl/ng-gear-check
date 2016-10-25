@@ -5,6 +5,8 @@ import { Observable } from 'rxjs/Observable';
 import { Observer } from 'rxjs/Observer';
 import 'rxjs/add/operator/map';
 
+import { environment } from '../../../../environments/environment';
+
 import { GuildResult } from './guild.result';
 
 @Injectable()
@@ -15,7 +17,8 @@ export class GuildService {
 
     public getGuildInfo (region: string, realm: string, guildName: string, fields: string[]): Observable<GuildResult> {
         return new Observable<GuildResult>((observer: Observer<GuildResult>) => {
-            let url = `https://${region}.api.battle.net/wow/guild/${realm}/${guildName}?fields=${fields.join(',')}&locale=en_GB&apikey=qc7s5cjqfhnwh5pbbgqp8grfynckas7n`;
+            let apiKey = environment.battleNetApiKey;
+            let url = `https://${region}.api.battle.net/wow/guild/${realm}/${guildName}?fields=${fields.join(',')}&locale=en_GB&apikey=${apiKey}`;
             
             let headers: Headers = new Headers({
                 Accept: 'application/json'

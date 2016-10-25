@@ -2,6 +2,11 @@
 
 This project was generated with [angular-cli](https://github.com/angular/angular-cli) version 1.0.0-beta.18.
 
+## How to get a key
+
+To run this app, you'll need an API key for the battle.net API.
+Go to https://dev.battle.net/, create an account and an app. This will generate a key which you need to place in the `environments/environment.ts` file.
+
 ## Development server
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
