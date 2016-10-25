@@ -4,17 +4,25 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
+import { GuildTable } from './components/guild-table/guild-table.component';
+
+import {AgGridModule} from 'ag-grid-ng2/main';
+
+import { GuildService } from './services/battle-net/wow/guild.service';
+import { CharacterService } from './services/battle-net/wow/character.service';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    GuildTable
   ],
   imports: [
     BrowserModule,
     FormsModule,
-    HttpModule
+    HttpModule,
+    AgGridModule.withNg2ComponentSupport()
   ],
-  providers: [],
+  providers: [ GuildService, CharacterService ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
