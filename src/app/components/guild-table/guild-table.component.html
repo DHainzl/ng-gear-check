@@ -17,5 +17,6 @@
 <ag-grid-ng2 #agGrid style="height: 90%; width:100%" [class]="searchData.style"
              [gridOptions]="gridOptions"
              (gridReady)="onGridReady($event)"
+             (viewportChanged)="onViewportChanged($event)"
 >
 </ag-grid-ng2>

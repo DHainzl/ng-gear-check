@@ -1,7 +1,7 @@
 import { Component, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { GridOptions } from 'ag-grid/main';
+import { GridOptions, RowNode } from 'ag-grid/main';
 import { GuildTableNameRendererComponent } from './guild-table-name-renderer.component';
 import { GuildTableDetailsRendererComponent } from './guild-table-details-renderer.component';
 import { GuildTableItemRendererComponent } from './guild-table-item-renderer.component';
@@ -9,6 +9,7 @@ import { GuildTableData } from './guild-table.data';
 
 import { GuildService } from '../../services/battle-net/wow/guild.service';
 import { CharacterService } from '../../services/battle-net/wow/character.service';
+import { CharacterResult } from '../../services/battle-net/wow/character.result';
 
 @Component({
   selector: 'guild-table',
@@ -23,8 +24,8 @@ export class GuildTable {
 
   private searchData = {
     region: 'eu',
-    realm: 'Blackmoore',
-    guild: 'Targaryen',
+    realm: 'Blackrock',
+    guild: 'skull first then x',
     style: 'ag-blue'
   };
 
@@ -62,7 +63,7 @@ export class GuildTable {
                 detailsLoaded: false
             }));
             this.gridOptions.api.setRowData(this.rowData);
-            this.loadCharacterDetails();
+            // this.loadCharacterDetails();
             // this.gridOptions.api.setRowData(data.members.map(member => member.character)),
         },
         error => console.log(error)
@@ -72,6 +73,32 @@ export class GuildTable {
   onGridReady() {
     this.gridOptions.api.sizeColumnsToFit();
   }
+
+  onViewportChanged(event) {
+      // TODO [] for not scrolled grid, is this a bug?
+      // console.log(this.gridOptions.api.getRenderedNodes());
+
+      let nodes: RowNode[] = [];
+      this.gridOptions.api.forEachNode(node => nodes.push(node));
+
+      let loadingNodes = nodes
+        .filter((node, idx) => idx >= event.firstRow && idx <= event.lastRow)
+        .filter(node => !node.data.isLoading && !node.data.isLoaded)
+        .forEach(node => this.loadNode(node));
+  }
+
+ private loadNode (node: RowNode) {
+      let loadingData = node.data;
+      loadingData.isLoading = true;
+      node.setData(loadingData);
+
+      this.wowCharacterService.getItems(this.searchData.region, node.data.realm, node.data.name)
+        .subscribe(char => {
+            let newData = this.applyCharData(node.data, char);
+            node.setData(newData);
+        });
+  }
+
 
   private createColumnDefs () {
         return [
@@ -226,82 +253,76 @@ export class GuildTable {
         ];
   }
 
-  private loadCharacterDetails () {
-      this.rowData.forEach(rowData => {
-          this.wowCharacterService.getItems(this.searchData.region, rowData.realm, rowData.name).subscribe(
-              char => {
-                rowData.avgItemLevel = char.items.averageItemLevel;
-                rowData.head = {
-                    id: char.items.head && char.items.head.id || 0,
-                    itemLevel: char.items.head && char.items.head.itemLevel || 0
-                }
-                rowData.neck = {
-                    id: char.items.neck && char.items.neck.id || 0,
-                    itemLevel: char.items.neck && char.items.neck.itemLevel || 0
-                }
-                rowData.shoulder = {
-                    id: char.items.shoulder && char.items.shoulder.id || 0,
-                    itemLevel: char.items.shoulder && char.items.shoulder.itemLevel || 0
-                }
-                rowData.back = {
-                    id: char.items.back && char.items.back.id || 0,
-                    itemLevel: char.items.back && char.items.back.itemLevel || 0
-                }
-                rowData.chest = {
-                    id: char.items.chest && char.items.chest.id || 0,
-                    itemLevel: char.items.chest && char.items.chest.itemLevel || 0
-                }
-                rowData.wrist = {
-                    id: char.items.wrist && char.items.wrist.id || 0,
-                    itemLevel: char.items.wrist && char.items.wrist.itemLevel || 0
-                }
-                rowData.hands = {
-                    id: char.items.hands && char.items.hands.id || 0,
-                    itemLevel: char.items.hands && char.items.hands.itemLevel || 0
-                }
-                rowData.waist = {
-                    id: char.items.waist && char.items.waist.id || 0,
-                    itemLevel: char.items.waist && char.items.waist.itemLevel || 0
-                }
-                rowData.legs = {
-                    id: char.items.legs && char.items.legs.id || 0,
-                    itemLevel: char.items.legs && char.items.legs.itemLevel || 0
-                }
-                rowData.feet = {
-                    id: char.items.feet && char.items.feet.id || 0,
-                    itemLevel: char.items.feet && char.items.feet.itemLevel || 0
-                }
-                rowData.finger1 = {
-                    id: char.items.finger1 && char.items.finger1.id || 0,
-                    itemLevel: char.items.finger1 && char.items.finger1.itemLevel || 0
-                }
-                rowData.finger2 = {
-                    id: char.items.finger2 && char.items.finger2.id || 0,
-                    itemLevel: char.items.finger2 && char.items.finger2.itemLevel || 0
-                }
-                rowData.trinket1 = {
-                    id: char.items.trinket1 && char.items.trinket1.id || 0,
-                    itemLevel: char.items.trinket1 && char.items.trinket1.itemLevel || 0
-                }
-                rowData.trinket2 = {
-                    id: char.items.trinket2 && char.items.trinket2.id || 0,
-                    itemLevel: char.items.trinket2 && char.items.trinket2.itemLevel || 0
-                }
-                rowData.mainHand = {
-                    id: char.items.mainHand && char.items.mainHand.id || 0,
-                    itemLevel: char.items.mainHand && char.items.mainHand.itemLevel || 0
-                }
-                rowData.offHand = {
-                    id: char.items.offHand && char.items.offHand.id || 0,
-                    itemLevel: char.items.offHand && char.items.offHand.itemLevel || 0
-                }                
-                rowData.detailsLoading = false;
-                rowData.detailsLoaded = true;
 
-                this.gridOptions.api.setRowData(this.rowData);
-              },
-              error => console.error(error)
-          )
-      });
+  private applyCharData(data: GuildTableData, char: CharacterResult) {
+        data.avgItemLevel = char.items.averageItemLevel;
+        data.head = {
+            id: char.items.head && char.items.head.id || 0,
+            itemLevel: char.items.head && char.items.head.itemLevel || 0
+        }
+        data.neck = {
+            id: char.items.neck && char.items.neck.id || 0,
+            itemLevel: char.items.neck && char.items.neck.itemLevel || 0
+        }
+        data.shoulder = {
+            id: char.items.shoulder && char.items.shoulder.id || 0,
+            itemLevel: char.items.shoulder && char.items.shoulder.itemLevel || 0
+        }
+        data.back = {
+            id: char.items.back && char.items.back.id || 0,
+            itemLevel: char.items.back && char.items.back.itemLevel || 0
+        }
+        data.chest = {
+            id: char.items.chest && char.items.chest.id || 0,
+            itemLevel: char.items.chest && char.items.chest.itemLevel || 0
+        }
+        data.wrist = {
+            id: char.items.wrist && char.items.wrist.id || 0,
+            itemLevel: char.items.wrist && char.items.wrist.itemLevel || 0
+        }
+        data.hands = {
+            id: char.items.hands && char.items.hands.id || 0,
+            itemLevel: char.items.hands && char.items.hands.itemLevel || 0
+        }
+        data.waist = {
+            id: char.items.waist && char.items.waist.id || 0,
+            itemLevel: char.items.waist && char.items.waist.itemLevel || 0
+        }
+        data.legs = {
+            id: char.items.legs && char.items.legs.id || 0,
+            itemLevel: char.items.legs && char.items.legs.itemLevel || 0
+        }
+        data.feet = {
+            id: char.items.feet && char.items.feet.id || 0,
+            itemLevel: char.items.feet && char.items.feet.itemLevel || 0
+        }
+        data.finger1 = {
+            id: char.items.finger1 && char.items.finger1.id || 0,
+            itemLevel: char.items.finger1 && char.items.finger1.itemLevel || 0
+        }
+        data.finger2 = {
+            id: char.items.finger2 && char.items.finger2.id || 0,
+            itemLevel: char.items.finger2 && char.items.finger2.itemLevel || 0
+        }
+        data.trinket1 = {
+            id: char.items.trinket1 && char.items.trinket1.id || 0,
+            itemLevel: char.items.trinket1 && char.items.trinket1.itemLevel || 0
+        }
+        data.trinket2 = {
+            id: char.items.trinket2 && char.items.trinket2.id || 0,
+            itemLevel: char.items.trinket2 && char.items.trinket2.itemLevel || 0
+        }
+        data.mainHand = {
+            id: char.items.mainHand && char.items.mainHand.id || 0,
+            itemLevel: char.items.mainHand && char.items.mainHand.itemLevel || 0
+        }
+        data.offHand = {
+            id: char.items.offHand && char.items.offHand.id || 0,
+            itemLevel: char.items.offHand && char.items.offHand.itemLevel || 0
+        }                
+        data.detailsLoading = false;
+        data.detailsLoaded = true;
+
+        return data;
   }
 }
